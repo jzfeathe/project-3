@@ -1,0 +1,81 @@
+---
+title: "project-3"
+author: "Justin Feathers"
+date: '2022-11-01'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, eval = TRUE, warning = FALSE, message = FALSE)
+```
+
+# Introduction
+Describes the data and variables we want to use. Target is `shares`
+```{r}
+library(tidyverse)
+library(corrplot)
+```
+
+# Data
+variables of interest: n_tokens_content, num_imgs, num_videos, kw_min_min, kw_max_min,
+                       kw_min_max, kw_max_max, is_weekend 
+```{r}
+newsData <- read_csv(file = "./OnlineNewsPopularity.csv")
+techData <- newsData %>% 
+            filter(data_channel_is_tech == 1) %>%
+            select(n_tokens_content, num_imgs, num_videos, kw_min_min, kw_max_min,
+                       kw_min_max, kw_max_max, is_weekend, shares)  
+summary(newsData)
+summary(techData)
+techData
+```
+
+# Summarizations
+To start, we can look at a correlation plot to see if multicollinearity exists between
+any of the variables. Using `corrplot`, we can see that the variables `kw_min_min` and
+`kw_max_max` have a strong negative correlation of -0.83, so we will drop `kw_min_min`
+from the dataset.
+
+We can analyze a few of the variables by plotting them against `shares`. If we create
+a scatter plot of `num_imgs` by `shares`, we can see an outlier when `num_imgs` = 1.
+Let's remove that.
+```{r}
+correlation <- cor(techData)
+corrplot(correlation, type = "upper", tl.pos = "lt")
+corrplot(correlation, type = "lower", method = "number",
+         add = TRUE, diag = FALSE, tl.pos = "n")
+techData <- techData %>%
+            select(-kw_min_min)
+g <- ggplot(techData, aes(x = num_imgs, y = shares))
+g + geom_point()
+```
+
+We can see the outlier is a single point. We can find the value by using a `summary`
+statement. After filtering out outlier, we can see the scatter plot looks much more
+reasonable. Based on this plot, it looks like articles with 0 or 1 images tend to
+get the most shares with a quadratic decline until hitting the local minimum at 5 images
+where it changes to a positive upswing until 11 images. It looks as though `shares`
+continues on a negative linear trend after that.
+```{r}
+summary(techData$shares)
+noOutlier <- techData %>%
+             filter(shares != 663600)
+
+g <- ggplot(noOutlier, aes(y = shares))
+g + geom_point(aes(x = num_imgs))
+
+g + geom_point(aes(x = n_tokens_content))
+
+g + geom_point(aes(x = is_weekend))
+```
+
+
+
+
+
+
+
+
+
+
+
