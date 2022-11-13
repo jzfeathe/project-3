@@ -14,60 +14,118 @@ Describes the data and variables we want to use. Target is `shares`
 ```{r}
 library(tidyverse)
 library(corrplot)
+library(caret)
 ```
 
 # Data
-variables of interest: n_tokens_content, num_imgs, num_videos, kw_min_min, kw_max_min,
-                       kw_min_max, kw_max_max, is_weekend 
 ```{r}
 newsData <- read_csv(file = "./OnlineNewsPopularity.csv")
 techData <- newsData %>% 
             filter(data_channel_is_tech == 1) %>%
-            select(n_tokens_content, num_imgs, num_videos, kw_min_min, kw_max_min,
-                       kw_min_max, kw_max_max, is_weekend, shares)  
-summary(newsData)
-summary(techData)
-techData
+              select(-url, -timedelta)
 ```
 
 # Summarizations
-To start, we can look at a correlation plot to see if multicollinearity exists between
-any of the variables. Using `corrplot`, we can see that the variables `kw_min_min` and
-`kw_max_max` have a strong negative correlation of -0.83, so we will drop `kw_min_min`
-from the dataset.
+A good way of starting is by checking how strongly all variables are correlated to
+the response variable of interest. I created a correlation matrix using the `cor`
+function and sorted the absolute values of the output to get a convenient tibble
+of descending correlation values.
+
+From here, we can look at a correlation plot of the chosen variables to see if 
+multicollinearity exists between any of the variables. Using `corrplot`, we can 
+see that the variables `n_unique_tokens` and `n_tokens_content` have a strong negative correlation
+of -0.73. There is an extremely strong positive correlation of 0.93 between `n_unique_tokens`
+and `n_non_stop_unique_tokens` -- we will try dropping `n_unique_tokens` from the dataset
+and reassessing. We can see in the new `corrplot` that multicollinearity has been
+minimized as desired.
 
 We can analyze a few of the variables by plotting them against `shares`. If we create
 a scatter plot of `num_imgs` by `shares`, we can see an outlier when `num_imgs` = 1.
 Let's remove that.
 ```{r}
+techCor <- cor(techData$shares, techData) %>%
+        as.tibble() %>%
+        abs() %>%
+        sort(decreasing = TRUE)
+techCor
+
+techData <- techData %>% 
+            select(num_hrefs, n_tokens_content, n_unique_tokens, kw_avg_avg,
+                   n_non_stop_unique_tokens, num_videos, min_negative_polarity,
+                   rate_positive_words, min_positive_polarity, shares)
+
 correlation <- cor(techData)
 corrplot(correlation, type = "upper", tl.pos = "lt")
 corrplot(correlation, type = "lower", method = "number",
          add = TRUE, diag = FALSE, tl.pos = "n")
+
 techData <- techData %>%
-            select(-kw_min_min)
-g <- ggplot(techData, aes(x = num_imgs, y = shares))
-g + geom_point()
+            select(-n_unique_tokens)
+
+corrplot(correlation, type = "upper", tl.pos = "lt")
+corrplot(correlation, type = "lower", method = "number",
+         add = TRUE, diag = FALSE, tl.pos = "n")
 ```
 
 We can see the outlier is a single point. We can find the value by using a `summary`
-statement. After filtering out outlier, we can see the scatter plot looks much more
+statement. After filtering out the outlier, we can see the scatter plot looks much more
 reasonable. Based on this plot, it looks like articles with 0 or 1 images tend to
 get the most shares with a quadratic decline until hitting the local minimum at 5 images
 where it changes to a positive upswing until 11 images. It looks as though `shares`
-continues on a negative linear trend after that.
+continues on a negative linear trend after that. Inspecting the plot for `shares` 
+vs. `n_tokens_content` seems to suggest shares tend to decrease after articles go 
+beyond 250-500 words. Next, the plot of `shares` vs. `rate_positive_words` suggests 
+that articles are far more likely to be shared as the rate of positive words increases.
+Finally, we can see quartiles and means for the variables using the `summary` function
+and standard deviations with the `sd` function.
 ```{r}
 summary(techData$shares)
 noOutlier <- techData %>%
              filter(shares != 663600)
 
 g <- ggplot(noOutlier, aes(y = shares))
-g + geom_point(aes(x = num_imgs))
-
+g + geom_point(aes(x = num_hrefs))
 g + geom_point(aes(x = n_tokens_content))
+g + geom_point(aes(x = rate_positive_words))
 
-g + geom_point(aes(x = is_weekend))
+summary(techData)
+techData %>%
+  sapply(sd)
 ```
+
+# Modeling
+```{r}
+set.seed(5000)
+techIndex <- createDataPartition(techData$shares, p = 0.70, list = FALSE)
+techTrain <- techData[techIndex, ]
+techTest <- techData[-techIndex, ]
+```
+
+## Multiple Linear Regression
+Fitting a multiple regression model on all variables in the `techTrain` dataset,
+we can see from the `summary` function that this model is not a very good fit with
+an adjusted R^2 value of 0.01 -- this means only 1% of the variance in the data is
+explained by the model. We need to explore better options.
+
+```{r}
+mlrFit <- train(shares ~ ., data = techTrain,
+                preProcess = c("center", "scale"),
+                method = "lm")
+mlrPredict <- predict(mlrFit, newdata = techTest)
+postResample(mlrPredict, techTest$shares)
+```
+
+## Random Forest
+```{r}
+techForest <- train(shares ~ ., data = techTrain,
+                method = "rf",
+                preProcess = c("center", "scale"),
+                tuneGrid = data.frame(mtry = ncol(techTrain)/3),
+                trControl = trainControl(method = "cv", number = 5))
+forestPredict <- predict(techForest, newdata = techTest)
+postResample(forestPredict, techTest$shares)
+```
+
 
 
 
