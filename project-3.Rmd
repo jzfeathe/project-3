@@ -25,7 +25,11 @@ newsData <- read_csv(file = "./OnlineNewsPopularity.csv")
 data <- newsData %>% 
             filter(get(paste0("data_channel_is_", params$channel)) == 1) %>%
               select(-url, -timedelta)
+
 channelIDs <- list("lifestyle", "entertainment", "bus", "socmed", "tech", "world")
+output_file <- paste0(channelIDs, ".html")
+parameters = lapply(channelIDs, FUN = function(x){list(channel = x)})
+reports <- tibble(output_file, parameters)
 ```
 
 # Summarizations
@@ -99,10 +103,10 @@ data %>%
 
 # Modeling
 ```{r}
-set.seed(5000)
+set.seed(250)
 index <- createDataPartition(data$shares, p = 0.70, list = FALSE)
-train <- data[techIndex, ]
-test <- data[-techIndex, ]
+train <- data[index, ]
+test <- data[-index, ]
 ```
 
 ## Multiple Linear Regression
@@ -112,9 +116,10 @@ an adjusted R^2 value of 0.01 -- this means only 1% of the variance in the data 
 explained by the model. We need to explore better options.
 
 ```{r}
-mlrFit <- train(shares ~ ., data = data,
+mlrFit <- train(shares ~ ., data = train,
                 preProcess = c("center", "scale"),
-                method = "lm")
+                method = "lm",
+                trControl = trainControl(method = "cv", number = 5))
 mlrPredict <- predict(mlrFit, newdata = test)
 temp <- postResample(mlrPredict, test$shares)
 mlrRsquare <- temp[2]
@@ -141,23 +146,8 @@ as how much of the variance in the data can be explained by the model, i.e., how
 well the model fits.
 ```{r}
 if (mlrRsquare > forestRsquare) {
-  paste0("Multiple linear regression is the preferred model")
+  paste0("Multiple linear regression is the preferred model for data channel = ", params$channel)
 } else {
-  paste0("Random forest is the preferred model")
+  paste0("Random forest is the preferred model for data channel = ", params$channel)
 }
 ```
-
-# Automation
-
-
-
-
-
-
-
-
-
-
-
-
-
