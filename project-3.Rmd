@@ -140,5 +140,5 @@ if (mlrRsquare > forestRsquare) {
   paste0("Multiple linear regression is the preferred model for data channel = ", params$channel)
 } else {
   paste0("Random forest is the preferred model for data channel = ", params$channel)
-}
+} 
 ```
