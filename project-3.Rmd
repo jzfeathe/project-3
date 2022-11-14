@@ -12,7 +12,7 @@ knitr::opts_chunk$set(echo = TRUE, eval = TRUE, warning = FALSE, message = FALSE
 ```
 
 ```{r}
-library(rmarkdown)
+library(rmarkdown) 
 
 channelIDs <- list("lifestyle", "entertainment", "bus", "socmed", "tech", "world")
 output_file <- paste0(channelIDs, ".html")
