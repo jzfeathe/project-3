@@ -1,8 +1,3 @@
-project-3
-================
-Justin Feathers
-2022-11-01
-
 library(rmarkdown)
 
 channelIDs \<- list(“lifestyle”, “entertainment”, “bus”, “socmed”,
@@ -11,5 +6,4 @@ channelIDs \<- list(“lifestyle”, “entertainment”, “bus”, “socmed�
 tibble(output_file, parameters)
 
 apply(reports, MARGIN = 1, FUN = function(x){ render(input =
-“/project-3.md”, output_file = x\[\[1\]\], params = x\[\[2\]\]) })
- 
+“./project-3.Rmd”, output_file = x\[\[1\]\], params = x\[\[2\]\]) })
