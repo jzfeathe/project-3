@@ -11,7 +11,6 @@ Describes the data and variables we want to use. Target is `shares`
 library(tidyverse)
 library(corrplot)
 library(caret)
-library(rmarkdown)
 ```
 
 # Data
@@ -21,11 +20,6 @@ newsData <- read_csv(file = "./OnlineNewsPopularity.csv")
 data <- newsData %>% 
             filter(get(paste0("data_channel_is_", params$channel)) == 1) %>%
               select(-url, -timedelta)
-
-channelIDs <- list("lifestyle", "entertainment", "bus", "socmed", "tech", "world")
-output_file <- paste0(channelIDs, ".html")
-parameters = lapply(channelIDs, FUN = function(x){list(channel = x)})
-reports <- tibble(output_file, parameters)
 ```
 
 # Summarizations
