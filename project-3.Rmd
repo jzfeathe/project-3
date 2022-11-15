@@ -36,8 +36,9 @@ the `shares` variable.
 # Data
 The first step in any analysis is to call the required packages and read in the 
 dataset. Here, we use the `get` function to tell R to use the character string
-as a variable object -- in this case, the appropriate `parms` value. By using a 
-logical statement we are able to choose only the rows corresponding to our news
+as a variable object -- in this case, the appropriate `params` value which corresponds
+to one of six data channels in the dataset that we will use to subset the rows.
+By using a logical statement we are able to choose only the rows corresponding to our news
 channel. Because `url` and `timedelta` are not predictive variables, they have 
 been dropped from the dataset.
 ```{r}
@@ -58,19 +59,7 @@ beginning of the variable selection process. Since we are interested in predicti
 I created a correlation matrix using the `cor` function and sorted the absolute values
 of the output to get a convenient tibble of descending correlation values; this was
 originally done using the `tech` data channel to set the ground work. I decided
-to choose the 9 variables with the highest correlation (positive or negative) with
-`shares`.
-
-From here, we can look at a correlation plot of the chosen variables to see if 
-multicollinearity exists between any of them. Using `corrplot`, we can 
-check the relationships (correlation) between the chosen variables. Though subjective
-in nature, a general rule of thumb is that any correlation greater than 0.70 or 
-less than -0.70 between variables (not involving the response) is considered a 
-problematic level of multicollinearity. In the original assessment, `n_unique_tokens`
-had a high correlation with 2 different variables, so it was dropped from the dataset.
-
-Next, we should look at some summary data with `summary()` to get a feel for the ranges
-of the predictors and response.
+to choose the 9 variables with the highest correlation with `shares`.
 ```{r}
 dataCor <- cor(data$shares, data) %>%
         as.tibble() %>%
@@ -82,7 +71,16 @@ data <- data %>%
             select(num_hrefs, n_tokens_content, n_unique_tokens, kw_avg_avg,
                    n_non_stop_unique_tokens, num_videos, min_negative_polarity,
                    rate_positive_words, min_positive_polarity, shares)
+```
 
+From here, we can look at a correlation plot of the chosen variables to see if 
+multicollinearity exists between any of them. Using `corrplot`, we can 
+check the relationships (correlations) between the chosen variables. Though subjective
+in nature, a general rule of thumb is that any correlation between variables
+(not involving the response) greater than 0.70 or less than -0.70 is considered a 
+problematic level of multicollinearity. In the original assessment, `n_unique_tokens`
+had a high correlation with 2 different variables, so it was dropped from the dataset.
+```{r}
 correlation <- cor(data)
 corrplot(correlation, type = "upper", tl.pos = "lt")
 corrplot(correlation, type = "lower", method = "number",
@@ -95,40 +93,51 @@ correlation <- cor(data)
 corrplot(correlation, type = "upper", tl.pos = "lt")
 corrplot(correlation, type = "lower", method = "number",
          add = TRUE, diag = FALSE, tl.pos = "n")
+```
 
-summary(data)
+Next, we should look at some summary data with `summary()` to get a feel for the ranges
+of the predictors and response.
+```{r}
+summary <- summary(data)
+summary  
+
 mean <- mean(data$shares)
+paste0("The mean of shares is ", summary[4, 9])
+paste0("The 3rd Quartile of shares is ", summary[5, 9])
 sd <- sd(data$shares)
+paste0("The standard deviation of shares is ", sd)
+paste0("The maximum value of shares is ", summary[6, 9])
+interval <- 3*sd(data$shares) + mean(data$shares)
 g <- ggplot(data, aes(x = shares))
 g + geom_histogram()
-interval <- 3*sd(data$shares) + mean(data$shares)
 ```
 
 We can see from the summary statistics and histogram that `shares` has a very 
-large max value, but a small mean and q3, comparatively. This indicates that the
-distribution is strongly skewed left. We can fix this by temporarily removing
-outliers to make data visualization more meaningful. Using the mean and standard
-deviation for `shares`, we can calculate an interval that gives us 3 standard deviations
-above the mean, which means we will encompass 99.7% of the data while removing outliers.
-Because we can't have negative shares, we will have values between 0 and `r interval`. 
+large max value, but a small mean, q3, and standard deviation comparatively. 
+This indicates that the distribution is strongly skewed left. We can fix this by
+temporarily removing outliers to make data visualization more meaningful. Using 
+the mean and standard deviation for `shares`, we can calculate an interval that 
+gives us 3 standard deviations above the mean, which means we will encompass 
+99.7% of the data while removing outliers. Because we can't have negative shares,
+we will have values between 0 and `r interval`. 
 
 First, we'll take a look at a plot without the adjustment for comparison's sake.
-Clearly, the adjustment does, indeed, make it easier to observe trends in the data.
-Now we can inspect some scatter plots with our improved `shares` variable.  
 ```{r}
 g <- ggplot(data, aes(y = shares))
 g + geom_point(aes(x = num_hrefs))
-```
-Here is a scatter plot of `num_hrefs` by `shares`. A positive trend would indicate
-that shares should increase as the number of links in the article increases. If
-we observe a negative trend, the number of shares should decrease as the number
-of links increases.
-```{r}
+
 temp <- data %>%
           filter(shares < interval)
 g <- ggplot(temp, aes(y = shares))
 g + geom_point(aes(x = num_hrefs))
 ```
+
+Clearly the adjustment does, indeed, make it easier to observe trends in the data.
+Now we can inspect some scatter plots with our improved `shares` variable.  
+The above is a scatter plot of `num_hrefs` by `shares`. A positive trend would indicate
+that shares should increase as the number of links in the article increases. If
+we observe a negative trend, the number of shares should decrease as the number
+of links increases.
 
 Next is a scatter plot of `n_tokens_content` by `shares`. A positive trend would indicate
 that shares should increase as the number of words in the article increases; likewise,
@@ -142,12 +151,17 @@ And finally, we have a scatter plot of `rate_positive_words` by `shares`. Again,
 a positive trend would indicate that we should observe an increase in shares as 
 as the proportion of positive words to non-neutral words increases while a 
 negative trend would indicate a decrease in shares as the proportion of positive 
-words increases to non-neutral words increases.
+words to non-neutral words increases.
 ```{r}
 g + geom_point(aes(x = rate_positive_words))
 ```
 
 # Modeling
+Now that we have some rudimentary understanding of the data, we can explore predictions
+using different models. The first step in this process is to split the data into
+a training and test set. We will use the `createDataPartition` function to create
+an index on which to split the data, using 70% for the training set and the remaining
+30% for the test set.
 ```{r}
 set.seed(250)
 index <- createDataPartition(data$shares, p = 0.70, list = FALSE)
@@ -156,38 +170,92 @@ test <- data[-index, ]
 ```
 
 ## Multiple Linear Regression
-Fitting a multiple regression model on all variables in the `data` dataset,
-we can see from the `summary` function that this model is not a very good fit with
-an adjusted R^2 value of 0.01 -- this means only 1% of the variance in the data is
-explained by the model. We need to explore better options.
+A linear regression model attempts to use one or more predictor variables to explain 
+(or predict) a single response variable. In this particular case, we will fit a 
+multiple linear regression model, which means we will use a linear combination of
+more than one variable to explain our response variable, `shares`.  
 
+Using the `train` function, we will train the data using the `train` object we 
+created, making sure to preprocess the data by centering and scaling it. Notice
+for a linear regression model, we use method `lm`; we are also specifying the 
+`trControl` option to run cross-validation with five folds.  
+
+We can use the `predict` function to utilize the trained data for making predictions
+on the test set.
 ```{r}
 mlrFit <- train(shares ~ ., data = train,
                 preProcess = c("center", "scale"),
                 method = "lm",
                 trControl = trainControl(method = "cv", number = 5))
+paste0("The results for the model fit on the training set are:")  
+mlrFit$results
 mlrPredict <- predict(mlrFit, newdata = test)
-temp <- postResample(mlrPredict, test$shares)
-mlrRsquare <- temp[2]
-mlrRsquare
+mlrPredictResults <- postResample(mlrPredict, test$shares)
+paste0("The results for the model fit on the test set are:")
+mlrPredictResults
+mlrRsquare <- mlrPredictResults[2]
 ```
 
+`mlrFit` gives us an R^2^ value of **`r mlrFit$results$Rsquared` for the trained data**,
+while `mlrRsquare` gives us an R^2^ value of **`r mlrRsquare` for the test set**. If
+the R^2^ value for the training set is low, the model is underfitting the data and
+more exploration needs to be done in order to find a better model, better predictor
+variables, or both.
+
+If the training and test set R^2^ values are similar, then we can say the model 
+generalizes well. If the training set R^2^ is much higher than the test set R^2^,
+then we can say the model is overfitting the data, meaning the model does not
+generalize well to data outside the training set.
+
 ## Random Forest
+Now we will fit a more robust model -- a random forest. This model is one of many
+tree-based methods that splits up the predictor space into regions with different
+predictions for each region. A random forest utilizes a method known as "bootstrap
+aggregation". This process takes a single sample and then takes repeated samples
+of size n with replacement (where n = the total number of observations in the 
+original sample) to create a distribution of bootstrapped samples which greatly
+reduces variance. What I have described so far is known as a "bagged tree" method;
+a random forest takes the idea of a bagged tree one step further by also taking
+a random subset of predictor variables for each bootstrap sample. If a very strong
+predictor exists, every bootstrap sample will likely use it for the first split.
+This is problematic because it will cause the trees produced to have more strongly
+correlated predictions which, in turn, diminishes the variance reduction from
+the bootstrap aggregation process described earlier. Choosing a random subset of
+predictors mitigates this problem by greatly increasing the likelihood that any
+given tree does not select the dominating predictor variable.
+
+Now that we have an understanding of how the method works, we can set up a random
+forest model for our data. Just like the linear regression model, we can use the
+`train` function, but this time with method `rf`. Although preprocessing is not
+necessary for tree-based methods, I still like to include it in my models as a 
+best practice, lest I forget to use it when it is necessary. The `tuneGrid` option
+is where we can tell the model how many predictor variables to grab per bootstrap
+sample. The default is (number of predictors)/3 for regression, but I still like to do this 
+as best practice again. The `trainControl` function within the `trControl` option 
+is how we set up options like the cross-validation we will use here. Finally, 
+as with the multiple linear regression above, we can use the trained data
+to make predictions on the test set.
 ```{r}
 forest <- train(shares ~ ., data = train,
                 method = "rf",
                 preProcess = c("center", "scale"),
                 tuneGrid = data.frame(mtry = ncol(train)/3),
                 trControl = trainControl(method = "cv", number = 5))
+paste0("The results for the model fit on the training set are:")  
+forest$results
 forestPredict <- predict(forest, newdata = test)
-temp <- postResample(forestPredict, test$shares)
-forestRsquare <- temp[2]
-forestRsquare
+forestPredictResults <- postResample(forestPredict, test$shares)
+paste0("The results for the model fit on the test set are:")
+forestPredictResults
+forestRsquare <- forestPredictResults[2]
 ```
 
+`forest` gives us an R^2^ value of **`r forest$results$Rsquared` for the trained data**,
+while `forestRsquare` gives us an R^2^ value of **`r forestRsquare` for the test set**.  
+
 # Comparison
-To compare the models, we will use a simple comparison of R^2 and choose the
-one with the highest value. We will use this method since R^2 can be interpreted
+To compare the models, we will use a simple comparison of R^2^ and choose the
+one with the highest value. We will use this method since R^2^ can be interpreted
 as how much of the variance in the data can be explained by the model, i.e., how
 well the model fits.
 ```{r}
