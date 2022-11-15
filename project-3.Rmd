@@ -16,28 +16,35 @@ knitr::opts_chunk$set(echo = TRUE, eval = TRUE, warning = FALSE, message = FALSE
 ```
 
 # Introduction
-A good way of starting is by checking how strongly all variables are correlated to
-the response variable of interest. I created a correlation matrix using the `cor`
-function and sorted the absolute values of the output to get a convenient tibble
-of descending correlation values.
+The dataset we'll be exploring is a collection of online news articles published by
+Mashable in a period of two years. By analyzing a subset of the variables from the 
+dataset, we hope to predict the response variable, `shares`. Using correlation plots,
+I have decided to use `num_hrefs` (number of links in the article), 
+`n_tokens_content` (number of words in the article), `kw_avg_avg` (mean shares for
+the average number of keywords), `n_non_stop_unique_tokens` (the rate of unique
+non-stop words in the content), `num_videos` (the number of videos), 
+`min_negative_polarity` (minimum polarity of negative words), `rate_positive_words`
+(rate of positive words among non-neutral tokens), and `min_positive_polarity` 
+(minimum polarity of positive words) as our predictive variables. I will go into
+more detail with the variable selection process later.
 
-From here, we can look at a correlation plot of the chosen variables to see if 
-multicollinearity exists between any of the variables. Using `corrplot`, we can 
-see that the variables `n_unique_tokens` and `n_tokens_content` have a strong negative correlation
-of -0.73. There is an extremely strong positive correlation of 0.93 between `n_unique_tokens`
-and `n_non_stop_unique_tokens` -- we will try dropping `n_unique_tokens` from the dataset
-and reassessing. We can see in the new `corrplot` that multicollinearity has been
-minimized as desired.
+We will explore
+these variables through a number of summary statistics and plots and finally
+use multiple linear regression and random forest models to make predictions for
+the `shares` variable.
 
-Describes the data and variables we want to use. Target is `shares`
+# Data
+The first step in any analysis is to call the required packages and read in the 
+dataset. Here, we use the `get` function to tell R to use the character string
+as a variable object -- in this case, the appropriate `parms` value. By using a 
+logical statement we are able to choose only the rows corresponding to our news
+channel. Because `url` and `timedelta` are not predictive variables, they have 
+been dropped from the dataset.
 ```{r}
 library(tidyverse)
 library(corrplot)
 library(caret)
-```
-
-# Data
-```{r}
+library(shiny)
 newsData <- read_csv(file = "./OnlineNewsPopularity.csv")
 data <- newsData %>% 
             filter(get(paste0("data_channel_is_", params$channel)) == 1) %>%
@@ -45,13 +52,25 @@ data <- newsData %>%
 ```
 
 # Summarizations
+Once the dataset is read in, a good way to start is by checking how strongly 
+all variables are correlated to the response variable of interest. This is the 
+beginning of the variable selection process. Since we are interested in predicting `shares`,
+I created a correlation matrix using the `cor` function and sorted the absolute values
+of the output to get a convenient tibble of descending correlation values; this was
+originally done using the `tech` data channel to set the ground work. I decided
+to choose the 9 variables with the highest correlation (positive or negative) with
+`shares`.
 
+From here, we can look at a correlation plot of the chosen variables to see if 
+multicollinearity exists between any of them. Using `corrplot`, we can 
+check the relationships (correlation) between the chosen variables. Though subjective
+in nature, a general rule of thumb is that any correlation greater than 0.70 or 
+less than -0.70 between variables (not involving the response) is considered a 
+problematic level of multicollinearity. In the original assessment, `n_unique_tokens`
+had a high correlation with 2 different variables, so it was dropped from the dataset.
 
-
-
-We can analyze a few of the variables by plotting them against `shares`. If we create
-a scatter plot of `num_imgs` by `shares`, we can see an outlier when `num_imgs` = 1.
-Let's remove that.
+Next, we should look at some summary data with `summary()` to get a feel for the ranges
+of the predictors and response.
 ```{r}
 dataCor <- cor(data$shares, data) %>%
         as.tibble() %>%
@@ -76,32 +95,56 @@ correlation <- cor(data)
 corrplot(correlation, type = "upper", tl.pos = "lt")
 corrplot(correlation, type = "lower", method = "number",
          add = TRUE, diag = FALSE, tl.pos = "n")
-```
-
-We can see the outlier is a single point. We can find the value by using a `summary`
-statement. After filtering out the outlier, we can see the scatter plot looks much more
-reasonable. Based on this plot, it looks like articles with 0 or 1 images tend to
-get the most shares with a quadratic decline until hitting the local minimum at 5 images
-where it changes to a positive upswing until 11 images. It looks as though `shares`
-continues on a negative linear trend after that. Inspecting the plot for `shares` 
-vs. `n_tokens_content` seems to suggest shares tend to decrease after articles go 
-beyond 250-500 words. Next, the plot of `shares` vs. `rate_positive_words` suggests 
-that articles are far more likely to be shared as the rate of positive words increases.
-Finally, we can see quartiles and means for the variables using the `summary` function
-and standard deviations with the `sd` function.
-```{r}
-summary(data$shares)
-noOutlier <- data %>%
-             filter(shares != 663600)
-
-g <- ggplot(noOutlier, aes(y = shares))
-g + geom_point(aes(x = num_hrefs))
-g + geom_point(aes(x = n_tokens_content))
-g + geom_point(aes(x = rate_positive_words))
 
 summary(data)
-data %>%
-  sapply(sd)
+mean <- mean(data$shares)
+sd <- sd(data$shares)
+g <- ggplot(data, aes(x = shares))
+g + geom_histogram()
+interval <- 3*sd(data$shares) + mean(data$shares)
+```
+
+We can see from the summary statistics and histogram that `shares` has a very 
+large max value, but a small mean and q3, comparatively. This indicates that the
+distribution is strongly skewed left. We can fix this by temporarily removing
+outliers to make data visualization more meaningful. Using the mean and standard
+deviation for `shares`, we can calculate an interval that gives us 3 standard deviations
+above the mean, which means we will encompass 99.7% of the data while removing outliers.
+Because we can't have negative shares, we will have values between 0 and `r interval`. 
+
+First, we'll take a look at a plot without the adjustment for comparison's sake.
+Clearly, the adjustment does, indeed, make it easier to observe trends in the data.
+Now we can inspect some scatter plots with our improved `shares` variable.  
+```{r}
+g <- ggplot(data, aes(y = shares))
+g + geom_point(aes(x = num_hrefs))
+```
+Here is a scatter plot of `num_hrefs` by `shares`. A positive trend would indicate
+that shares should increase as the number of links in the article increases. If
+we observe a negative trend, the number of shares should decrease as the number
+of links increases.
+```{r}
+temp <- data %>%
+          filter(shares < interval)
+g <- ggplot(temp, aes(y = shares))
+g + geom_point(aes(x = num_hrefs))
+```
+
+Next is a scatter plot of `n_tokens_content` by `shares`. A positive trend would indicate
+that shares should increase as the number of words in the article increases; likewise,
+the number of shares should decrease as word count increases if we observe a negative
+trend.
+```{r}
+g + geom_point(aes(x = n_tokens_content))
+```
+
+And finally, we have a scatter plot of `rate_positive_words` by `shares`. Again,
+a positive trend would indicate that we should observe an increase in shares as 
+as the proportion of positive words to non-neutral words increases while a 
+negative trend would indicate a decrease in shares as the proportion of positive 
+words increases to non-neutral words increases.
+```{r}
+g + geom_point(aes(x = rate_positive_words))
 ```
 
 # Modeling
