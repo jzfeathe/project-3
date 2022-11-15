@@ -3,7 +3,30 @@ project-3
 Justin Feathers
 2022-11-01
 
+-   <a href="#introduction" id="toc-introduction">Introduction</a>
+-   <a href="#data" id="toc-data">Data</a>
+-   <a href="#summarizations" id="toc-summarizations">Summarizations</a>
+-   <a href="#modeling" id="toc-modeling">Modeling</a>
+    -   <a href="#multiple-linear-regression"
+        id="toc-multiple-linear-regression">Multiple Linear Regression</a>
+    -   <a href="#random-forest" id="toc-random-forest">Random Forest</a>
+-   <a href="#comparison" id="toc-comparison">Comparison</a>
+
 # Introduction
+
+A good way of starting is by checking how strongly all variables are
+correlated to the response variable of interest. I created a correlation
+matrix using the `cor` function and sorted the absolute values of the
+output to get a convenient tibble of descending correlation values.
+
+From here, we can look at a correlation plot of the chosen variables to
+see if multicollinearity exists between any of the variables. Using
+`corrplot`, we can see that the variables `n_unique_tokens` and
+`n_tokens_content` have a strong negative correlation of -0.73. There is
+an extremely strong positive correlation of 0.93 between
+`n_unique_tokens` and `n_non_stop_unique_tokens` – we will try dropping
+`n_unique_tokens` from the dataset and reassessing. We can see in the
+new `corrplot` that multicollinearity has been minimized as desired.
 
 Describes the data and variables we want to use. Target is `shares`
 
@@ -24,20 +47,6 @@ data <- newsData %>%
 
 # Summarizations
 
-A good way of starting is by checking how strongly all variables are
-correlated to the response variable of interest. I created a correlation
-matrix using the `cor` function and sorted the absolute values of the
-output to get a convenient tibble of descending correlation values.
-
-From here, we can look at a correlation plot of the chosen variables to
-see if multicollinearity exists between any of the variables. Using
-`corrplot`, we can see that the variables `n_unique_tokens` and
-`n_tokens_content` have a strong negative correlation of -0.73. There is
-an extremely strong positive correlation of 0.93 between
-`n_unique_tokens` and `n_non_stop_unique_tokens` – we will try dropping
-`n_unique_tokens` from the dataset and reassessing. We can see in the
-new `corrplot` that multicollinearity has been minimized as desired.
-
 We can analyze a few of the variables by plotting them against `shares`.
 If we create a scatter plot of `num_imgs` by `shares`, we can see an
 outlier when `num_imgs` = 1. Let’s remove that.
@@ -50,17 +59,13 @@ dataCor <- cor(data$shares, data) %>%
 dataCor
 ```
 
-    ## # A tibble: 1 x 53
-    ##   shares kw_avg_avg num_videos n_tokens_content self_reference_min_sh~ LDA_03 kw_max_avg num_hrefs num_imgs min_negative_po~
-    ##    <dbl>      <dbl>      <dbl>            <dbl>                  <dbl>  <dbl>      <dbl>     <dbl>    <dbl>            <dbl>
-    ## 1      1     0.0915     0.0883           0.0730                 0.0724 0.0680     0.0536    0.0536   0.0512           0.0476
-    ## # ... with 43 more variables: self_reference_avg_sharess <dbl>, rate_positive_words <dbl>, LDA_04 <dbl>, LDA_02 <dbl>,
-    ## #   kw_max_max <dbl>, kw_min_min <dbl>, weekday_is_monday <dbl>, kw_avg_max <dbl>, abs_title_subjectivity <dbl>,
-    ## #   average_token_length <dbl>, weekday_is_friday <dbl>, avg_negative_polarity <dbl>, global_rate_negative_words <dbl>,
-    ## #   n_unique_tokens <dbl>, n_non_stop_words <dbl>, weekday_is_wednesday <dbl>, LDA_01 <dbl>, rate_negative_words <dbl>,
-    ## #   weekday_is_tuesday <dbl>, global_sentiment_polarity <dbl>, kw_min_max <dbl>, num_keywords <dbl>,
-    ## #   self_reference_max_shares <dbl>, kw_min_avg <dbl>, LDA_00 <dbl>, global_subjectivity <dbl>, num_self_hrefs <dbl>,
-    ## #   n_non_stop_unique_tokens <dbl>, kw_max_min <dbl>, weekday_is_saturday <dbl>, is_weekend <dbl>, ...
+<div data-pagedtable="false">
+
+<script data-pagedtable-source type="application/json">
+{"columns":[{"label":["shares"],"name":[1],"type":["dbl"],"align":["right"]},{"label":["kw_avg_avg"],"name":[2],"type":["dbl"],"align":["right"]},{"label":["num_videos"],"name":[3],"type":["dbl"],"align":["right"]},{"label":["n_tokens_content"],"name":[4],"type":["dbl"],"align":["right"]},{"label":["self_reference_min_shares"],"name":[5],"type":["dbl"],"align":["right"]},{"label":["LDA_03"],"name":[6],"type":["dbl"],"align":["right"]},{"label":["kw_max_avg"],"name":[7],"type":["dbl"],"align":["right"]},{"label":["num_hrefs"],"name":[8],"type":["dbl"],"align":["right"]},{"label":["num_imgs"],"name":[9],"type":["dbl"],"align":["right"]},{"label":["min_negative_polarity"],"name":[10],"type":["dbl"],"align":["right"]},{"label":["self_reference_avg_sharess"],"name":[11],"type":["dbl"],"align":["right"]},{"label":["rate_positive_words"],"name":[12],"type":["dbl"],"align":["right"]},{"label":["LDA_04"],"name":[13],"type":["dbl"],"align":["right"]},{"label":["LDA_02"],"name":[14],"type":["dbl"],"align":["right"]},{"label":["kw_max_max"],"name":[15],"type":["dbl"],"align":["right"]},{"label":["kw_min_min"],"name":[16],"type":["dbl"],"align":["right"]},{"label":["weekday_is_monday"],"name":[17],"type":["dbl"],"align":["right"]},{"label":["kw_avg_max"],"name":[18],"type":["dbl"],"align":["right"]},{"label":["abs_title_subjectivity"],"name":[19],"type":["dbl"],"align":["right"]},{"label":["average_token_length"],"name":[20],"type":["dbl"],"align":["right"]},{"label":["weekday_is_friday"],"name":[21],"type":["dbl"],"align":["right"]},{"label":["avg_negative_polarity"],"name":[22],"type":["dbl"],"align":["right"]},{"label":["global_rate_negative_words"],"name":[23],"type":["dbl"],"align":["right"]},{"label":["n_unique_tokens"],"name":[24],"type":["dbl"],"align":["right"]},{"label":["n_non_stop_words"],"name":[25],"type":["dbl"],"align":["right"]},{"label":["weekday_is_wednesday"],"name":[26],"type":["dbl"],"align":["right"]},{"label":["LDA_01"],"name":[27],"type":["dbl"],"align":["right"]},{"label":["rate_negative_words"],"name":[28],"type":["dbl"],"align":["right"]},{"label":["weekday_is_tuesday"],"name":[29],"type":["dbl"],"align":["right"]},{"label":["global_sentiment_polarity"],"name":[30],"type":["dbl"],"align":["right"]},{"label":["kw_min_max"],"name":[31],"type":["dbl"],"align":["right"]},{"label":["num_keywords"],"name":[32],"type":["dbl"],"align":["right"]},{"label":["self_reference_max_shares"],"name":[33],"type":["dbl"],"align":["right"]},{"label":["kw_min_avg"],"name":[34],"type":["dbl"],"align":["right"]},{"label":["LDA_00"],"name":[35],"type":["dbl"],"align":["right"]},{"label":["global_subjectivity"],"name":[36],"type":["dbl"],"align":["right"]},{"label":["num_self_hrefs"],"name":[37],"type":["dbl"],"align":["right"]},{"label":["n_non_stop_unique_tokens"],"name":[38],"type":["dbl"],"align":["right"]},{"label":["kw_max_min"],"name":[39],"type":["dbl"],"align":["right"]},{"label":["weekday_is_saturday"],"name":[40],"type":["dbl"],"align":["right"]},{"label":["is_weekend"],"name":[41],"type":["dbl"],"align":["right"]},{"label":["max_negative_polarity"],"name":[42],"type":["dbl"],"align":["right"]},{"label":["kw_avg_min"],"name":[43],"type":["dbl"],"align":["right"]},{"label":["weekday_is_thursday"],"name":[44],"type":["dbl"],"align":["right"]},{"label":["avg_positive_polarity"],"name":[45],"type":["dbl"],"align":["right"]},{"label":["min_positive_polarity"],"name":[46],"type":["dbl"],"align":["right"]},{"label":["global_rate_positive_words"],"name":[47],"type":["dbl"],"align":["right"]},{"label":["title_subjectivity"],"name":[48],"type":["dbl"],"align":["right"]},{"label":["title_sentiment_polarity"],"name":[49],"type":["dbl"],"align":["right"]},{"label":["n_tokens_title"],"name":[50],"type":["dbl"],"align":["right"]},{"label":["weekday_is_sunday"],"name":[51],"type":["dbl"],"align":["right"]},{"label":["max_positive_polarity"],"name":[52],"type":["dbl"],"align":["right"]},{"label":["abs_title_sentiment_polarity"],"name":[53],"type":["dbl"],"align":["right"]}],"data":[{"1":"1","2":"0.09151899","3":"0.08831106","4":"0.07302425","5":"0.07239815","6":"0.06804324","7":"0.05361193","8":"0.05358639","9":"0.0512013","10":"0.04756143","11":"0.04240444","12":"0.04158548","13":"0.04000588","14":"0.03679955","15":"0.03676879","16":"0.03595713","17":"0.03180005","18":"0.0313892","19":"0.031166","20":"0.03056319","21":"0.03046185","22":"0.03042206","23":"0.02968718","24":"0.02967712","25":"0.02785583","26":"0.02728382","27":"0.02667249","28":"0.0251372","29":"0.0230349","30":"0.02230472","31":"0.02066715","32":"0.0196917","33":"0.0188409","34":"0.01826119","35":"0.01825793","36":"0.01773988","37":"0.01643292","38":"0.01389977","39":"0.01340154","40":"0.0131925","41":"0.01265463","42":"0.01234227","43":"0.01021514","44":"0.00928353","45":"0.009062109","46":"0.006805796","47":"0.005395787","48":"0.004971199","49":"0.004779263","50":"0.00408709","51":"0.004063292","52":"0.003560046","53":"0.0007176881"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
+  </script>
+
+</div>
 
 ``` r
 data <- data %>% 
@@ -74,7 +79,7 @@ corrplot(correlation, type = "lower", method = "number",
          add = TRUE, diag = FALSE, tl.pos = "n")
 ```
 
-![](lifestyle_files/figure-gfm/unnamed-chunk-7-1.png)<!-- -->
+![](lifestyle_files/figure-gfm/unnamed-chunk-4-1.png)<!-- -->
 
 ``` r
 data <- data %>%
@@ -86,7 +91,7 @@ corrplot(correlation, type = "lower", method = "number",
          add = TRUE, diag = FALSE, tl.pos = "n")
 ```
 
-![](lifestyle_files/figure-gfm/unnamed-chunk-7-2.png)<!-- -->
+![](lifestyle_files/figure-gfm/unnamed-chunk-4-2.png)<!-- -->
 
 We can see the outlier is a single point. We can find the value by using
 a `summary` statement. After filtering out the outlier, we can see the
@@ -117,19 +122,19 @@ g <- ggplot(noOutlier, aes(y = shares))
 g + geom_point(aes(x = num_hrefs))
 ```
 
-![](lifestyle_files/figure-gfm/unnamed-chunk-8-1.png)<!-- -->
+![](lifestyle_files/figure-gfm/unnamed-chunk-5-1.png)<!-- -->
 
 ``` r
 g + geom_point(aes(x = n_tokens_content))
 ```
 
-![](lifestyle_files/figure-gfm/unnamed-chunk-8-2.png)<!-- -->
+![](lifestyle_files/figure-gfm/unnamed-chunk-5-2.png)<!-- -->
 
 ``` r
 g + geom_point(aes(x = rate_positive_words))
 ```
 
-![](lifestyle_files/figure-gfm/unnamed-chunk-8-3.png)<!-- -->
+![](lifestyle_files/figure-gfm/unnamed-chunk-5-3.png)<!-- -->
 
 ``` r
 summary(data)

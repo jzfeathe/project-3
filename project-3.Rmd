@@ -2,7 +2,11 @@
 title: "project-3"
 author: "Justin Feathers"
 date: '2022-11-01'
-output: github_document
+output: 
+  github_document:
+    toc: true
+    toc_depth: 2
+    df_print: paged
 params:
     channel: "tech"
 ---
@@ -12,6 +16,19 @@ knitr::opts_chunk$set(echo = TRUE, eval = TRUE, warning = FALSE, message = FALSE
 ```
 
 # Introduction
+A good way of starting is by checking how strongly all variables are correlated to
+the response variable of interest. I created a correlation matrix using the `cor`
+function and sorted the absolute values of the output to get a convenient tibble
+of descending correlation values.
+
+From here, we can look at a correlation plot of the chosen variables to see if 
+multicollinearity exists between any of the variables. Using `corrplot`, we can 
+see that the variables `n_unique_tokens` and `n_tokens_content` have a strong negative correlation
+of -0.73. There is an extremely strong positive correlation of 0.93 between `n_unique_tokens`
+and `n_non_stop_unique_tokens` -- we will try dropping `n_unique_tokens` from the dataset
+and reassessing. We can see in the new `corrplot` that multicollinearity has been
+minimized as desired.
+
 Describes the data and variables we want to use. Target is `shares`
 ```{r}
 library(tidyverse)
@@ -28,18 +45,9 @@ data <- newsData %>%
 ```
 
 # Summarizations
-A good way of starting is by checking how strongly all variables are correlated to
-the response variable of interest. I created a correlation matrix using the `cor`
-function and sorted the absolute values of the output to get a convenient tibble
-of descending correlation values.
 
-From here, we can look at a correlation plot of the chosen variables to see if 
-multicollinearity exists between any of the variables. Using `corrplot`, we can 
-see that the variables `n_unique_tokens` and `n_tokens_content` have a strong negative correlation
-of -0.73. There is an extremely strong positive correlation of 0.93 between `n_unique_tokens`
-and `n_non_stop_unique_tokens` -- we will try dropping `n_unique_tokens` from the dataset
-and reassessing. We can see in the new `corrplot` that multicollinearity has been
-minimized as desired.
+
+
 
 We can analyze a few of the variables by plotting them against `shares`. If we create
 a scatter plot of `num_imgs` by `shares`, we can see an outlier when `num_imgs` = 1.

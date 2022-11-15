@@ -3,7 +3,30 @@ project-3
 Justin Feathers
 2022-11-01
 
+-   <a href="#introduction" id="toc-introduction">Introduction</a>
+-   <a href="#data" id="toc-data">Data</a>
+-   <a href="#summarizations" id="toc-summarizations">Summarizations</a>
+-   <a href="#modeling" id="toc-modeling">Modeling</a>
+    -   <a href="#multiple-linear-regression"
+        id="toc-multiple-linear-regression">Multiple Linear Regression</a>
+    -   <a href="#random-forest" id="toc-random-forest">Random Forest</a>
+-   <a href="#comparison" id="toc-comparison">Comparison</a>
+
 # Introduction
+
+A good way of starting is by checking how strongly all variables are
+correlated to the response variable of interest. I created a correlation
+matrix using the `cor` function and sorted the absolute values of the
+output to get a convenient tibble of descending correlation values.
+
+From here, we can look at a correlation plot of the chosen variables to
+see if multicollinearity exists between any of the variables. Using
+`corrplot`, we can see that the variables `n_unique_tokens` and
+`n_tokens_content` have a strong negative correlation of -0.73. There is
+an extremely strong positive correlation of 0.93 between
+`n_unique_tokens` and `n_non_stop_unique_tokens` – we will try dropping
+`n_unique_tokens` from the dataset and reassessing. We can see in the
+new `corrplot` that multicollinearity has been minimized as desired.
 
 Describes the data and variables we want to use. Target is `shares`
 
@@ -24,20 +47,6 @@ data <- newsData %>%
 
 # Summarizations
 
-A good way of starting is by checking how strongly all variables are
-correlated to the response variable of interest. I created a correlation
-matrix using the `cor` function and sorted the absolute values of the
-output to get a convenient tibble of descending correlation values.
-
-From here, we can look at a correlation plot of the chosen variables to
-see if multicollinearity exists between any of the variables. Using
-`corrplot`, we can see that the variables `n_unique_tokens` and
-`n_tokens_content` have a strong negative correlation of -0.73. There is
-an extremely strong positive correlation of 0.93 between
-`n_unique_tokens` and `n_non_stop_unique_tokens` – we will try dropping
-`n_unique_tokens` from the dataset and reassessing. We can see in the
-new `corrplot` that multicollinearity has been minimized as desired.
-
 We can analyze a few of the variables by plotting them against `shares`.
 If we create a scatter plot of `num_imgs` by `shares`, we can see an
 outlier when `num_imgs` = 1. Let’s remove that.
@@ -50,17 +59,13 @@ dataCor <- cor(data$shares, data) %>%
 dataCor
 ```
 
-    ## # A tibble: 1 x 53
-    ##   shares kw_avg_avg kw_max_avg kw_max_min kw_avg_min self_reference_avg_sharess self_reference_m~ self_reference_~ num_hrefs
-    ##    <dbl>      <dbl>      <dbl>      <dbl>      <dbl>                      <dbl>             <dbl>            <dbl>     <dbl>
-    ## 1      1      0.174      0.160      0.140      0.120                     0.0953            0.0786           0.0743    0.0468
-    ## # ... with 44 more variables: num_keywords <dbl>, num_imgs <dbl>, global_subjectivity <dbl>, kw_avg_max <dbl>,
-    ## #   LDA_03 <dbl>, is_weekend <dbl>, LDA_02 <dbl>, weekday_is_sunday <dbl>, LDA_00 <dbl>, kw_min_avg <dbl>,
-    ## #   title_subjectivity <dbl>, abs_title_sentiment_polarity <dbl>, avg_positive_polarity <dbl>, min_positive_polarity <dbl>,
-    ## #   global_sentiment_polarity <dbl>, global_rate_positive_words <dbl>, LDA_04 <dbl>, weekday_is_tuesday <dbl>,
-    ## #   global_rate_negative_words <dbl>, weekday_is_saturday <dbl>, kw_max_max <dbl>, max_negative_polarity <dbl>,
-    ## #   num_self_hrefs <dbl>, n_tokens_content <dbl>, avg_negative_polarity <dbl>, average_token_length <dbl>, LDA_01 <dbl>,
-    ## #   n_tokens_title <dbl>, weekday_is_wednesday <dbl>, max_positive_polarity <dbl>, rate_negative_words <dbl>, ...
+<div data-pagedtable="false">
+
+<script data-pagedtable-source type="application/json">
+{"columns":[{"label":["shares"],"name":[1],"type":["dbl"],"align":["right"]},{"label":["kw_avg_avg"],"name":[2],"type":["dbl"],"align":["right"]},{"label":["kw_max_avg"],"name":[3],"type":["dbl"],"align":["right"]},{"label":["kw_max_min"],"name":[4],"type":["dbl"],"align":["right"]},{"label":["kw_avg_min"],"name":[5],"type":["dbl"],"align":["right"]},{"label":["self_reference_avg_sharess"],"name":[6],"type":["dbl"],"align":["right"]},{"label":["self_reference_min_shares"],"name":[7],"type":["dbl"],"align":["right"]},{"label":["self_reference_max_shares"],"name":[8],"type":["dbl"],"align":["right"]},{"label":["num_hrefs"],"name":[9],"type":["dbl"],"align":["right"]},{"label":["num_keywords"],"name":[10],"type":["dbl"],"align":["right"]},{"label":["num_imgs"],"name":[11],"type":["dbl"],"align":["right"]},{"label":["global_subjectivity"],"name":[12],"type":["dbl"],"align":["right"]},{"label":["kw_avg_max"],"name":[13],"type":["dbl"],"align":["right"]},{"label":["LDA_03"],"name":[14],"type":["dbl"],"align":["right"]},{"label":["is_weekend"],"name":[15],"type":["dbl"],"align":["right"]},{"label":["LDA_02"],"name":[16],"type":["dbl"],"align":["right"]},{"label":["weekday_is_sunday"],"name":[17],"type":["dbl"],"align":["right"]},{"label":["LDA_00"],"name":[18],"type":["dbl"],"align":["right"]},{"label":["kw_min_avg"],"name":[19],"type":["dbl"],"align":["right"]},{"label":["title_subjectivity"],"name":[20],"type":["dbl"],"align":["right"]},{"label":["abs_title_sentiment_polarity"],"name":[21],"type":["dbl"],"align":["right"]},{"label":["avg_positive_polarity"],"name":[22],"type":["dbl"],"align":["right"]},{"label":["min_positive_polarity"],"name":[23],"type":["dbl"],"align":["right"]},{"label":["global_sentiment_polarity"],"name":[24],"type":["dbl"],"align":["right"]},{"label":["global_rate_positive_words"],"name":[25],"type":["dbl"],"align":["right"]},{"label":["LDA_04"],"name":[26],"type":["dbl"],"align":["right"]},{"label":["weekday_is_tuesday"],"name":[27],"type":["dbl"],"align":["right"]},{"label":["global_rate_negative_words"],"name":[28],"type":["dbl"],"align":["right"]},{"label":["weekday_is_saturday"],"name":[29],"type":["dbl"],"align":["right"]},{"label":["kw_max_max"],"name":[30],"type":["dbl"],"align":["right"]},{"label":["max_negative_polarity"],"name":[31],"type":["dbl"],"align":["right"]},{"label":["num_self_hrefs"],"name":[32],"type":["dbl"],"align":["right"]},{"label":["n_tokens_content"],"name":[33],"type":["dbl"],"align":["right"]},{"label":["avg_negative_polarity"],"name":[34],"type":["dbl"],"align":["right"]},{"label":["average_token_length"],"name":[35],"type":["dbl"],"align":["right"]},{"label":["LDA_01"],"name":[36],"type":["dbl"],"align":["right"]},{"label":["n_tokens_title"],"name":[37],"type":["dbl"],"align":["right"]},{"label":["weekday_is_wednesday"],"name":[38],"type":["dbl"],"align":["right"]},{"label":["max_positive_polarity"],"name":[39],"type":["dbl"],"align":["right"]},{"label":["rate_negative_words"],"name":[40],"type":["dbl"],"align":["right"]},{"label":["min_negative_polarity"],"name":[41],"type":["dbl"],"align":["right"]},{"label":["kw_min_max"],"name":[42],"type":["dbl"],"align":["right"]},{"label":["rate_positive_words"],"name":[43],"type":["dbl"],"align":["right"]},{"label":["weekday_is_thursday"],"name":[44],"type":["dbl"],"align":["right"]},{"label":["n_unique_tokens"],"name":[45],"type":["dbl"],"align":["right"]},{"label":["n_non_stop_words"],"name":[46],"type":["dbl"],"align":["right"]},{"label":["n_non_stop_unique_tokens"],"name":[47],"type":["dbl"],"align":["right"]},{"label":["abs_title_subjectivity"],"name":[48],"type":["dbl"],"align":["right"]},{"label":["kw_min_min"],"name":[49],"type":["dbl"],"align":["right"]},{"label":["title_sentiment_polarity"],"name":[50],"type":["dbl"],"align":["right"]},{"label":["weekday_is_monday"],"name":[51],"type":["dbl"],"align":["right"]},{"label":["weekday_is_friday"],"name":[52],"type":["dbl"],"align":["right"]},{"label":["num_videos"],"name":[53],"type":["dbl"],"align":["right"]}],"data":[{"1":"1","2":"0.1742764","3":"0.1596356","4":"0.1398467","5":"0.1198875","6":"0.09533648","7":"0.07864837","8":"0.0742809","9":"0.04676477","10":"0.0397448","11":"0.03809298","12":"0.03751081","13":"0.03649163","14":"0.03394801","15":"0.03326525","16":"0.03081855","17":"0.03066592","18":"0.03064968","19":"0.02827869","20":"0.02520492","21":"0.02513925","22":"0.0240712","23":"0.02379888","24":"0.01954282","25":"0.01844167","26":"0.0170663","27":"0.0157599","28":"0.01360618","29":"0.01353825","30":"0.01352521","31":"0.01203021","32":"0.01146973","33":"0.01122183","34":"0.01057653","35":"0.009991654","36":"0.009480464","37":"0.009065995","38":"0.006990723","39":"0.006940211","40":"0.006778685","41":"0.005900553","42":"0.005658058","43":"0.005400506","44":"0.005164032","45":"0.004551485","46":"0.004438222","47":"0.004268375","48":"0.003476565","49":"0.003088106","50":"0.002798214","51":"0.002450865","52":"0.001549303","53":"0.0005863698"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
+  </script>
+
+</div>
 
 ``` r
 data <- data %>% 
