@@ -26,3 +26,4 @@ apply(reports, MARGIN = 1,
       FUN = function(x){  
         render(input = "./project-3.Rmd", output_file = x[[1]], params = x[[2]])  
       })  
+ 
