@@ -3,7 +3,7 @@ project-3
 Justin Feathers
 2022-11-01
 
--   <a href="#introduction" id="toc-introduction">Introduction</a>
+-   <a href="#introduction" id="toc-introduction">Introduction</a> 
 -   <a href="#data" id="toc-data">Data</a>
 -   <a href="#summarizations" id="toc-summarizations">Summarizations</a>
 -   <a href="#modeling" id="toc-modeling">Modeling</a>
