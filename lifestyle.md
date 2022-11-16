@@ -47,6 +47,8 @@ they have been dropped from the dataset.
 
 ``` r
 library(tidyverse)
+library(ggplot2)
+library(lattice)
 library(corrplot)
 library(caret)
 library(shiny)
@@ -114,7 +116,7 @@ corrplot(correlation, type = "lower", method = "number",
          add = TRUE, diag = FALSE, tl.pos = "n")
 ```
 
-![](lifestyle_files/figure-gfm/unnamed-chunk-41-1.png)<!-- -->
+![](lifestyle_files/figure-gfm/unnamed-chunk-4-1.png)<!-- -->
 
 ``` r
 data <- data %>%
@@ -126,7 +128,7 @@ corrplot(correlation, type = "lower", method = "number",
          add = TRUE, diag = FALSE, tl.pos = "n")
 ```
 
-![](lifestyle_files/figure-gfm/unnamed-chunk-41-2.png)<!-- -->
+![](lifestyle_files/figure-gfm/unnamed-chunk-4-2.png)<!-- -->
 
 Next, we should look at some summary data with `summary()` to get a feel
 for the ranges of the predictors and response.
@@ -183,7 +185,7 @@ g <- ggplot(data, aes(x = shares))
 g + geom_histogram()
 ```
 
-![](lifestyle_files/figure-gfm/unnamed-chunk-42-1.png)<!-- -->
+![](lifestyle_files/figure-gfm/unnamed-chunk-5-1.png)<!-- -->
 
 We can see from the summary statistics and histogram that `shares` has a
 very large max value, but a small mean, q3, and standard deviation
@@ -209,7 +211,7 @@ g + geom_point(aes(x = num_hrefs), color = "darkblue") +
          theme(plot.title = element_text(hjust = 0.5))
 ```
 
-![](lifestyle_files/figure-gfm/unnamed-chunk-43-1.png)<!-- -->
+![](lifestyle_files/figure-gfm/unnamed-chunk-6-1.png)<!-- -->
 
 ``` r
 temp <- data %>%
@@ -222,7 +224,7 @@ g + geom_point(aes(x = num_hrefs), color = "darkblue") +
          theme(plot.title = element_text(hjust = 0.5))
 ```
 
-![](lifestyle_files/figure-gfm/unnamed-chunk-43-2.png)<!-- -->
+![](lifestyle_files/figure-gfm/unnamed-chunk-6-2.png)<!-- -->
 
 Clearly the adjustment does, indeed, make it easier to observe trends in
 the data. Now we can inspect some scatter plots with our improved
@@ -245,7 +247,7 @@ g + geom_point(aes(x = n_tokens_content), color = "#355E3B") +
          theme(plot.title = element_text(hjust = 0.5))
 ```
 
-![](lifestyle_files/figure-gfm/unnamed-chunk-44-1.png)<!-- -->
+![](lifestyle_files/figure-gfm/unnamed-chunk-7-1.png)<!-- -->
 
 And finally, we have a scatter plot of `rate_positive_words` by
 `shares`. Again, a positive trend would indicate that we should observe
@@ -262,7 +264,7 @@ g + geom_point(aes(x = rate_positive_words), color = "#593876") +
          theme(plot.title = element_text(hjust = 0.5))
 ```
 
-![](lifestyle_files/figure-gfm/unnamed-chunk-45-1.png)<!-- -->
+![](lifestyle_files/figure-gfm/unnamed-chunk-8-1.png)<!-- -->
 
 # Modeling
 

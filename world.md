@@ -47,6 +47,8 @@ they have been dropped from the dataset.
 
 ``` r
 library(tidyverse)
+library(ggplot2)
+library(lattice)
 library(corrplot)
 library(caret)
 library(shiny)

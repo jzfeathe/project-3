@@ -47,6 +47,8 @@ they have been dropped from the dataset.
 
 ``` r
 library(tidyverse)
+library(ggplot2)
+library(lattice)
 library(corrplot)
 library(caret)
 library(shiny)
@@ -136,20 +138,20 @@ summary <- summary(data)
 summary  
 ```
 
-    ##    num_hrefs       n_tokens_content   kw_avg_avg    n_non_stop_unique_tokens   num_videos      min_negative_polarity
-    ##  Min.   :  0.000   Min.   :   0.0   Min.   :    0   Min.   :0.0000           Min.   : 0.0000   Min.   :-1.0000      
-    ##  1st Qu.:  5.000   1st Qu.: 256.0   1st Qu.: 2346   1st Qu.:0.6165           1st Qu.: 0.0000   1st Qu.:-0.6000      
-    ##  Median :  7.000   Median : 405.0   Median : 2698   Median :0.6897           Median : 0.0000   Median :-0.4000      
-    ##  Mean   :  9.417   Mean   : 571.6   Mean   : 2746   Mean   :0.6829           Mean   : 0.4472   Mean   :-0.4513      
-    ##  3rd Qu.: 11.000   3rd Qu.: 728.0   3rd Qu.: 3079   3rd Qu.:0.7568           3rd Qu.: 1.0000   3rd Qu.:-0.2500      
-    ##  Max.   :120.000   Max.   :5530.0   Max.   :19429   Max.   :1.0000           Max.   :73.0000   Max.   : 0.0000      
-    ##  rate_positive_words min_positive_polarity     shares      
-    ##  Min.   :0.0000      Min.   :0.00000       Min.   :    36  
-    ##  1st Qu.:0.6667      1st Qu.:0.05000       1st Qu.:  1100  
-    ##  Median :0.7524      Median :0.10000       Median :  1700  
-    ##  Mean   :0.7466      Mean   :0.09917       Mean   :  3072  
-    ##  3rd Qu.:0.8333      3rd Qu.:0.10000       3rd Qu.:  3000  
-    ##  Max.   :1.0000      Max.   :1.00000       Max.   :663600
+    ##    num_hrefs       n_tokens_content   kw_avg_avg    n_non_stop_unique_tokens   num_videos     
+    ##  Min.   :  0.000   Min.   :   0.0   Min.   :    0   Min.   :0.0000           Min.   : 0.0000  
+    ##  1st Qu.:  5.000   1st Qu.: 256.0   1st Qu.: 2346   1st Qu.:0.6165           1st Qu.: 0.0000  
+    ##  Median :  7.000   Median : 405.0   Median : 2698   Median :0.6897           Median : 0.0000  
+    ##  Mean   :  9.417   Mean   : 571.6   Mean   : 2746   Mean   :0.6829           Mean   : 0.4472  
+    ##  3rd Qu.: 11.000   3rd Qu.: 728.0   3rd Qu.: 3079   3rd Qu.:0.7568           3rd Qu.: 1.0000  
+    ##  Max.   :120.000   Max.   :5530.0   Max.   :19429   Max.   :1.0000           Max.   :73.0000  
+    ##  min_negative_polarity rate_positive_words min_positive_polarity     shares      
+    ##  Min.   :-1.0000       Min.   :0.0000      Min.   :0.00000       Min.   :    36  
+    ##  1st Qu.:-0.6000       1st Qu.:0.6667      1st Qu.:0.05000       1st Qu.:  1100  
+    ##  Median :-0.4000       Median :0.7524      Median :0.10000       Median :  1700  
+    ##  Mean   :-0.4513       Mean   :0.7466      Mean   :0.09917       Mean   :  3072  
+    ##  3rd Qu.:-0.2500       3rd Qu.:0.8333      3rd Qu.:0.10000       3rd Qu.:  3000  
+    ##  Max.   : 0.0000       Max.   :1.0000      Max.   :1.00000       Max.   :663600
 
 ``` r
 mean <- mean(data$shares)

@@ -1,3 +1,4 @@
+library(tidyverse)
 library(rmarkdown)
 
 channelIDs <- c("lifestyle", "entertainment", "bus", "socmed", "tech", "world")
