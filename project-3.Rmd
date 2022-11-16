@@ -53,7 +53,12 @@ data <- newsData %>%
 ```
 
 # Summarizations
-Once the dataset is read in, a good way to start is by checking how strongly 
+Now that we have the data read in, what do we do with it? We should perform an
+exploratory data analysis to get an idea of what we're working with and give some
+summarizations in the form of tables and plots.  
+
+## Correlation
+A good way to start is by checking how strongly 
 all variables are correlated to the response variable of interest. This is the 
 beginning of the variable selection process. Since we are interested in predicting `shares`,
 I created a correlation matrix using the `cor` function and sorted the absolute values
@@ -119,17 +124,26 @@ temporarily removing outliers to make data visualization more meaningful. Using
 the mean and standard deviation for `shares`, we can calculate an interval that 
 gives us 3 standard deviations above the mean, which means we will encompass 
 99.7% of the data while removing outliers. Because we can't have negative shares,
-we will have values between 0 and `r interval`. 
+we will have values between 0 and `r interval`.  
 
+## Plots  
 First, we'll take a look at a plot without the adjustment for comparison's sake.
 ```{r}
 g <- ggplot(data, aes(y = shares))
-g + geom_point(aes(x = num_hrefs))
+g + geom_point(aes(x = num_hrefs), color = "darkblue") +
+    labs(x = "Links", 
+         y = "Shares",
+         title = "Shares by Links in Article") +
+         theme(plot.title = element_text(hjust = 0.5))
 
 temp <- data %>%
           filter(shares < interval)
 g <- ggplot(temp, aes(y = shares))
-g + geom_point(aes(x = num_hrefs))
+g + geom_point(aes(x = num_hrefs), color = "darkblue") +
+    labs(x = "Links",
+         y = "Shares",
+         title = "Shares by Links in Article") +
+         theme(plot.title = element_text(hjust = 0.5))
 ```
 
 Clearly the adjustment does, indeed, make it easier to observe trends in the data.
@@ -144,7 +158,11 @@ that shares should increase as the number of words in the article increases; lik
 the number of shares should decrease as word count increases if we observe a negative
 trend.
 ```{r}
-g + geom_point(aes(x = n_tokens_content))
+g + geom_point(aes(x = n_tokens_content), color = "#355E3B") +
+    labs(x = "Words",
+         y = "Shares",
+         title = "Shares by Words in Article") +
+         theme(plot.title = element_text(hjust = 0.5))
 ```
 
 And finally, we have a scatter plot of `rate_positive_words` by `shares`. Again,
@@ -153,7 +171,11 @@ as the proportion of positive words to non-neutral words increases while a
 negative trend would indicate a decrease in shares as the proportion of positive 
 words to non-neutral words increases.
 ```{r}
-g + geom_point(aes(x = rate_positive_words))
+g + geom_point(aes(x = rate_positive_words), color = "#593876") +
+    labs(x = "Proportion of Positive Words",
+         y = "Shares",
+         title = "Shares by Proportion of Positive Words to Non-Neutral Words") +
+         theme(plot.title = element_text(hjust = 0.5))
 ```
 
 # Modeling

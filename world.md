@@ -6,6 +6,8 @@ Justin Feathers
 -   <a href="#introduction" id="toc-introduction">Introduction</a>
 -   <a href="#data" id="toc-data">Data</a>
 -   <a href="#summarizations" id="toc-summarizations">Summarizations</a>
+    -   <a href="#correlation" id="toc-correlation">Correlation</a>
+    -   <a href="#plots" id="toc-plots">Plots</a>
 -   <a href="#modeling" id="toc-modeling">Modeling</a>
     -   <a href="#multiple-linear-regression"
         id="toc-multiple-linear-regression">Multiple Linear Regression</a>
@@ -56,15 +58,21 @@ data <- newsData %>%
 
 # Summarizations
 
-Once the dataset is read in, a good way to start is by checking how
-strongly all variables are correlated to the response variable of
-interest. This is the beginning of the variable selection process. Since
-we are interested in predicting `shares`, I created a correlation matrix
-using the `cor` function and sorted the absolute values of the output to
-get a convenient tibble of descending correlation values; this was
-originally done using the `tech` data channel to set the ground work. I
-decided to choose the 9 variables with the highest correlation with
-`shares`.
+Now that we have the data read in, what do we do with it? We should
+perform an exploratory data analysis to get an idea of what we’re
+working with and give some summarizations in the form of tables and
+plots.
+
+## Correlation
+
+A good way to start is by checking how strongly all variables are
+correlated to the response variable of interest. This is the beginning
+of the variable selection process. Since we are interested in predicting
+`shares`, I created a correlation matrix using the `cor` function and
+sorted the absolute values of the output to get a convenient tibble of
+descending correlation values; this was originally done using the `tech`
+data channel to set the ground work. I decided to choose the 9 variables
+with the highest correlation with `shares`.
 
 ``` r
 dataCor <- cor(data$shares, data) %>%
@@ -187,12 +195,18 @@ deviations above the mean, which means we will encompass 99.7% of the
 data while removing outliers. Because we can’t have negative shares, we
 will have values between 0 and 2.0556742^{4}.
 
+## Plots
+
 First, we’ll take a look at a plot without the adjustment for
 comparison’s sake.
 
 ``` r
 g <- ggplot(data, aes(y = shares))
-g + geom_point(aes(x = num_hrefs))
+g + geom_point(aes(x = num_hrefs), color = "darkblue") +
+    labs(x = "Links", 
+         y = "Shares",
+         title = "Shares by Links in Article") +
+         theme(plot.title = element_text(hjust = 0.5))
 ```
 
 ![](world_files/figure-gfm/unnamed-chunk-5-1.png)<!-- -->
@@ -201,7 +215,11 @@ g + geom_point(aes(x = num_hrefs))
 temp <- data %>%
           filter(shares < interval)
 g <- ggplot(temp, aes(y = shares))
-g + geom_point(aes(x = num_hrefs))
+g + geom_point(aes(x = num_hrefs), color = "darkblue") +
+    labs(x = "Links",
+         y = "Shares",
+         title = "Shares by Links in Article") +
+         theme(plot.title = element_text(hjust = 0.5))
 ```
 
 ![](world_files/figure-gfm/unnamed-chunk-5-2.png)<!-- -->
@@ -220,7 +238,11 @@ in the article increases; likewise, the number of shares should decrease
 as word count increases if we observe a negative trend.
 
 ``` r
-g + geom_point(aes(x = n_tokens_content))
+g + geom_point(aes(x = n_tokens_content), color = "#355E3B") +
+    labs(x = "Words",
+         y = "Shares",
+         title = "Shares by Words in Article") +
+         theme(plot.title = element_text(hjust = 0.5))
 ```
 
 ![](world_files/figure-gfm/unnamed-chunk-6-1.png)<!-- -->
@@ -233,7 +255,11 @@ decrease in shares as the proportion of positive words to non-neutral
 words increases.
 
 ``` r
-g + geom_point(aes(x = rate_positive_words))
+g + geom_point(aes(x = rate_positive_words), color = "#593876") +
+    labs(x = "Proportion of Positive Words",
+         y = "Shares",
+         title = "Shares by Proportion of Positive Words to Non-Neutral Words") +
+         theme(plot.title = element_text(hjust = 0.5))
 ```
 
 ![](world_files/figure-gfm/unnamed-chunk-7-1.png)<!-- -->
