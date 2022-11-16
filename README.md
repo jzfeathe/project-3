@@ -3,6 +3,8 @@ and trying to predict the response variable "shares" using multiple linear regre
 
 The R packages used in the analyses were:
 * tidyverse  
+* ggplot2
+* lattice
 * corrplot  
 * caret  
 * shiny  
