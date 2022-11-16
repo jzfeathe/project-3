@@ -16,7 +16,8 @@ The analysis for [Socmed articles is available here](socmed.html)
 The analysis for [Tech articles is available here](tech.html)  
 The analysis for [World articles is available here](world.html)  
 
-Finally, here is the code used to automate the knitting of the six different data channels:  
+Finally, here is the code used to automate the knitting of documents for the six different data channels:  
+
 library(rmarkdown)  
 channelIDs <- c("lifestyle", "entertainment", "bus", "socmed", "tech", "world")  
 output_file <- paste0(channelIDs, ".md")  
